@@ -1,0 +1,24 @@
+version: "3.9"
+    
+services:
+    backend:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        env_file: .env.local
+        volumes: 
+            - .:/app/
+        ports:
+            - 127.0.0.1:5000:5000
+        depends_on:
+            - db
+        command: gunicorn backend.app:app -c ./backend/config/gunicorn_config.py
+
+    db:
+        container_name: db
+        image: postgis/postgis
+        environment:
+            POSTGRES_PASSWORD: postgres
+        volumes:
+            - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
