@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3"
     
 services:
     backend:
@@ -16,9 +16,14 @@ services:
 
     db:
         container_name: db
-        image: postgis/postgis
+        build:
+            context: .
+            dockerfile: Dockerfile-db
+        restart: always
+        ports:
+            - "5432:5432"
         environment:
             POSTGRES_PASSWORD: postgres
+            POSTGRES_USER: postgres
         volumes:
-            - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-
+            - ./data/roads.sql:/docker-entrypoint-initdb.d/roads.sql
