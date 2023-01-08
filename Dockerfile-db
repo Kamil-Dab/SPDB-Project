@@ -1,6 +1,6 @@
 FROM postgis/postgis
 
-# install pgRouting osm2pgrouting
+# install pgRouting osm2pgrouting osm2pgsql
 
 ENV PGROUTING_VERSION main
 ENV PGROUTING_GIT_HASH 113aa3b60f60db20ecc00e28b2ef4ae7d5e76219
@@ -27,6 +27,20 @@ RUN apt update \
         libexpat1-dev \
         libboost-dev \
         libboost-program-options-dev \
+       # for osm2pgsql
+       make \
+       cmake \
+       g++ \
+       libboost-dev \
+       libboost-system-dev \
+       libboost-filesystem-dev \
+       libexpat1-dev \
+       zlib1g-dev \
+       libbz2-dev \
+       libpq-dev \
+       libproj-dev \
+       lua5.2 \
+       liblua5.2-dev \
  && mkdir -p /usr/src/pgrouting \
  && cd /usr/src/pgrouting \
  && git init \
@@ -50,6 +64,29 @@ RUN apt update \
  && make \
  && make install \
  && cd / \
- && rm -rf /usr/src/osm2pgrouting
+ && rm -rf /usr/src/osm2pgrouting \
+#  for osm2pgsql
+ && mkdir -p /usr/src/osm2pgsql \
+ && cd /usr/src/osm2pgsql \
+ && git clone https://github.com/openstreetmap/osm2pgsql.git \
+ && cd osm2pgsql \
+ && mkdir build \
+ && cd build \
+ && cmake .. \
+ && make \
+ && make install \
+ && cd / \
+ && rm -rf /usr/src/osm2pgsql
 
  RUN rm /docker-entrypoint-initdb.d/10_postgis.sh
+
+
+RUN apt-get update \
+ && apt-get install -y wget \
+ && mkdir -p /osm_data \
+ && cd /osm_data \
+ && wget https://download.geofabrik.de/europe/poland/mazowieckie-latest.osm.pbf
+
+# RUN service postgresql start
+# ENTRYPOINT ["osm2pgsql", "--host=localhost", "--port=5432", "--username=postgres",
+#"--database=postgres", "/osm_data/mazowieckie-latest.osm.pbf"]

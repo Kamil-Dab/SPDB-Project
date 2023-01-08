@@ -26,4 +26,5 @@ services:
             POSTGRES_PASSWORD: postgres
             POSTGRES_USER: postgres
         volumes:
+            - ./data/init.sql:/docker-entrypoint-initdb.d/init.sql
             - ./data/roads.sql:/docker-entrypoint-initdb.d/roads.sql
