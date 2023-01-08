@@ -1,1 +1,0 @@
-CREATE DATABASE local_spdb;
