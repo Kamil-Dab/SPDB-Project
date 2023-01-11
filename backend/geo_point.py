@@ -5,8 +5,6 @@ from geoalchemy2.shape import from_shape
 from sqlalchemy import func
 
 
-
-
 class GeoPoint:
     def __init__(self, latitude, longitude, amenity):
         self.coord = Point(longitude, latitude)
