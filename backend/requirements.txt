@@ -5,3 +5,4 @@ SQLAlchemy==1.4.44
 psycopg2-binary==2.9.5
 GeoAlchemy2
 shapely
+pyproj
