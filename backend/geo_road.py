@@ -19,7 +19,7 @@ class GeoRoad:
         return self.session.query(Road).order_by(func.ST_Distance(func.ST_StartPoint(Road.geom), from_shape(self.end_coord, srid=4326), True)).limit(1).one()
 
     def shortest_path(self):
-        QUERY_SHORTEST_PATH=  f"""SELECT ST_AsText(geom)
+        QUERY_SHORTEST_PATH=  f"""SELECT agg_cost, ST_AsText(geom)
                 FROM pgr_dijkstra(
                    'SELECT id, source, target, st_length(geom, true) as cost FROM roads',
                    {self.get_nearest_start_point().source},
@@ -28,8 +28,10 @@ class GeoRoad:
                 ) as pt
                 JOIN roads rd ON pt.edge = rd.id ;"""
         result = self.session.bind.execute(QUERY_SHORTEST_PATH).all()
-        convert_result = [[*row[:-1], list(loads(row[-1]).coords)] for row in result]
-        return convert_result
+        all_points = []
+        for row in result:
+            all_points.extend(list(loads(row[-1]).coords))
+        return all_points, result[-1][0]
 
     def point_in_path(self, distance):
         QUERY_POINT_IN_PATH = f"""
