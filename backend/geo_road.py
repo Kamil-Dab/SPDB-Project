@@ -18,49 +18,47 @@ class GeoRoad:
     def get_nearest_end_point(self):
         return self.session.query(Road).order_by(func.ST_Distance(func.ST_StartPoint(Road.geom), from_shape(self.end_coord, srid=4326), True)).limit(1).one()
 
-    def shortest_path(self):
-        QUERY_SHORTEST_PATH=  f"""SELECT agg_cost, 
-        CASE
-            WHEN pt.node = rd.source THEN ST_AsText(geom)
-            ELSE ST_AsText(ST_Reverse(geom))
-        END AS geom
-                FROM pgr_dijkstra(
-                   'SELECT id, source, target, st_length(geom, true) as cost FROM roads',
-                   {self.get_nearest_start_point().source},
-                   {self.get_nearest_end_point().source},
-                   false
-                ) as pt
+    def shortest_path(self, table_name='main_road'):
+        QUERY_SHORTEST_PATH=  f"""
+            DROP TABLE IF EXISTS {table_name};
+            CREATE TABLE {table_name} AS
+            SELECT agg_cost, cost as cost, 
+                CASE
+                    WHEN pt.node = rd.source THEN geom
+                    ELSE ST_Reverse(geom)
+                END AS geom,
+                CASE
+                    WHEN pt.node = rd.source THEN ST_AsText(geom)
+                    ELSE ST_AsText(ST_Reverse(geom))
+                END AS geom_text
+            FROM pgr_dijkstra(
+                'SELECT id, source, target, st_length(geom, true) as cost FROM roads',
+                {self.get_nearest_start_point().source},
+                {self.get_nearest_end_point().source},
+                false
+            ) as pt
+            JOIN roads rd ON pt.edge = rd.id 
                 JOIN roads rd ON pt.edge = rd.id 
-                ORDER BY seq;"""
+            JOIN roads rd ON pt.edge = rd.id 
+            ORDER BY seq;
+            SELECT * FROM {table_name};"""
         result = self.session.bind.execute(QUERY_SHORTEST_PATH).all()
         all_points = []
         for row in result:
             all_points.extend(list(loads(row[-1]).coords))
         return all_points, result[-1][0]
 
-    def point_in_path(self, distance):
+    def point_in_path(self, distance, table_name='main_road'):
         QUERY_POINT_IN_PATH = f"""
             SELECT
-                ST_X(ST_LineInterpolatePoint(geom, procentage_left)) as x,
-                ST_Y(ST_LineInterpolatePoint(geom, procentage_left)) as y
+                ST_X(ST_LineInterpolatePoint(geom, ({distance} - agg_cost)/cost)) as x,
+                ST_Y(ST_LineInterpolatePoint(geom, ({distance} - agg_cost)/cost)) as y
             FROM
-            (
-                SELECT
-                    seq, node, edge, cost as cost, agg_cost, geom,
-                    ({distance} - agg_cost)/cost as procentage_left
-                FROM pgr_dijkstra(
-                    'SELECT id, source, target, st_length(geom, true) as cost FROM roads',
-                    {self.get_nearest_start_point().source},
-                    {self.get_nearest_end_point().target},
-                    false
-                ) as pt
-                JOIN roads rd ON pt.edge = rd.id
-                WHERE pt.agg_cost <= {distance}
-                ORDER BY agg_cost DESC LIMIT 1
-            ) as foo;
+                {table_name}
+            WHERE agg_cost <= {distance} 
+                ORDER BY agg_cost DESC LIMIT 1;
         """
         point = self.session.bind.execute(QUERY_POINT_IN_PATH).all()
         if not point:
             return []
-
         return point[0][:]
