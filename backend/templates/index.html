@@ -35,15 +35,53 @@
             <div class="row">
                 <div class="col border border-primary rounded m-2">
                     <div class='form-group p-3'>
-                        <label> Maksymalne wydłużenie drogi </label>
-                        <input type="text" class="form-control m-1" name="enlen" id="enlen" placeholder="20" />
+                        <label> Maksymalne wydłużenie drogi w km </label>
+                        <input type="text" class="form-control m-1" name="enlen" id="enlen" placeholder="20" value="20" />
                     </div>
                 </div>
 
                 <div class="col border border-primary rounded m-2">
                     <div class='form-group p-3'>
-                        <label> Punkt startu poszukiwań na trasie </label>
-                        <input type="text" class="form-control m-1" name="startPoint" id="startPoint" placeholder="20" />
+                        <label> Punkt startu poszukiwań na trasie w km </label>
+                        <input type="text" class="form-control m-1" name="startPoint" id="startPoint" placeholder="20" value="20" />
+                    </div>
+                </div>
+
+                <div class="col border border-primary rounded m-2">
+                    <div class="form-group p-3">
+                        <label> Liczba punktów POI do znalezienia </label>
+                        <input type="text" class="form-control m-1" name="POIs" id="POIs" placeholder="3" value="3" />
+                    </div>
+                </div>
+
+                <div class="col border border-primary rounded m-2">
+                    <div class="form-group p-3">
+                        <label> Typ punktu POI </label>
+                        <div class="dropdown m-1">
+                            <button class="btn btn-secondary dropdown-toggle p-3" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Wybierz z listy
+                            </button>
+                            <div class="dropdown-menu">
+                                {% for ty in poi_types %}
+                                <div class="dropdown-item" onclick="choosePOIFilter('{{ ty }}')"> {{ ty }} </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col border border-secondary rounded m-2">
+                    <label> Mapa </label>
+                    <div id="map" class="map d-flex justify-content-center" style="height:800px"></div>
+
+                    <div class="d-flex justify-content-center">
+                        <button type="button" onclick="setAsStart()" class="btn btn-primary m-1"> Ustaw jako start </button>
+                        <button type="button" onclick="setAsEnd()" class="btn btn-primary m-1"> Ustaw jako koniec </button>
+                        <button type="button" onclick="replaceStartEnd()" class="btn btn-primary m-1"> Zamień start z końcem </button>
+                        <button type="button" onclick="findRoute($('#enlen').val(), $('#startPoint').val(), $('#POIs').val())" class="btn btn-primary m-1"> Znajdź drogę </button>
+                        <button type="button" onclick="resetMap()" class="btn btn-secondary m-1"> Zresetuj </button>
                     </div>
                 </div>
             </div>
@@ -65,16 +103,11 @@
             </div>
 
             <div class="row">
-                <div class="col border border-secondary rounded m-2">
-                    <label> Mapa </label>
-                    <div id="map" class="map d-flex justify-content-center" style="height:400px"></div>
-
-                    <div class="d-flex justify-content-center">
-                        <button type="button" onclick="setAsStart()" class="btn btn-primary m-1"> Ustaw jako start </button>
-                        <button type="button" onclick="setAsEnd()" class="btn btn-primary m-1"> Ustaw jako koniec </button>
-                        <button type="button" onclick="replaceStartEnd()" class="btn btn-primary m-1"> Zamień start z końcem </button>
-                        <button type="button" onclick="findRoute($('#enlen').val(), $('#startPoint').val())" class="btn btn-primary m-1"> Znajdź drogę </button>
-                        <button type="button" onclick="resetMap()" class="btn btn-secondary m-1"> Zresetuj </button>
+                <div class="col border border-info rounded m-2">
+                    <label> Informacje o znalezionej drodze </label>
+                    <div class="form-group p-3">
+                        <label> Całkowita długość w km </label>
+                        <input type="text" class="form-control m-1" name="len" id="len" value="0" disabled />
                     </div>
                 </div>
             </div>
@@ -96,6 +129,13 @@
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal fade bd-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true" id="smallModal">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content" id="smallModalContent">
             </div>
           </div>
         </div>

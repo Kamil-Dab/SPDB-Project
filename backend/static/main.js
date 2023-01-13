@@ -7,6 +7,7 @@ const START = 'START';
 const END = 'END';
 const ROUTE = 'ROUTE';
 const POI = 'POI';
+const VIA = 'VIA';
 
 class InteractiveMap {
     constructor() {
@@ -94,8 +95,10 @@ class InteractiveMap {
         })
     }
 
-    select_point(lon, lat, type, text) {
-        this.clear_features(type);
+    select_point(lon, lat, type, text, noclear = false) {
+        if (!noclear) {
+            this.clear_features(type);
+        }
         let feature = new ol.Feature({
             geometry: new ol.geom.Point([ lon, lat ]),
             text: text !== undefined ? text : '',
@@ -121,7 +124,7 @@ class InteractiveMap {
     select_pois(pois) {
         this.clear_features(POI);
         pois.forEach((p) => {
-            this.select_point(p.lon, p.lat, POI, p.name);
+            this.select_point(p.lon, p.lat, POI, p.name, true);
         })
     }
 
@@ -165,6 +168,13 @@ class InteractiveMap {
         }
     }
 
+    center_map(lon, lat) {
+        this.map.setView(new ol.View({
+            center: [lon, lat],
+            zoom: 10
+        }))
+    }
+
     reset() {
         this.vectorSource.clear();
         this.start_point = null;
@@ -205,6 +215,10 @@ class POIManager {
 `
         )
         $('#selected_POI_list').html(html);
+        map.clear_features(VIA);
+        this.selected.forEach((point) => {
+            map.select_point(point.lon, point.lat, VIA, point.name, true);
+        })
     }
 
     add_poi(index) {
@@ -258,6 +272,7 @@ class PointChooser {
         $('#modal').modal('hide');
         let point = this.points.at(index);
         map.select_point(point.lon, point.lat, SELECTION, point.name);
+        map.center_map(point.lon, point.lat);
     }
 
     reset() {
@@ -269,6 +284,7 @@ class PointChooser {
 const map = new InteractiveMap();
 const poi = new POIManager();
 const chooser = new PointChooser();
+var POI_FILTER = "ALL";
 
 const fetchRoute = async (data) => {
     return await fetch("/route", {
@@ -320,23 +336,42 @@ window.resetMap = () => {
     chooser.reset();
 }
 
-window.findRoute = (enlen, searchStart) => {
+window.findRoute = (enlen, searchStart, poi_n) => {
+    $('#smallModalContent').html("<h1> Routing... </h1>");
+    $('#smallModal').modal('show');
+
     fetchRoute({
         enlen: parseFloat(enlen),
         searchStart: parseFloat(searchStart),
         start: map.start_point,
         end: map.end_point,
-        pois: poi.selected_pois()
+        pois: poi.selected_pois(),
+        poi_filter: POI_FILTER,
+        poi_n: poi_n
     })
-        .catch((e) => console.log(e))
+        .catch((e) => {
+            $('#smallModalContent').html(e);
+            setTimeout(() => {
+                $('#smallModal').modal('hide');
+            }, 1000);
+        })
         .then((resp) => resp.json())
         .then((obj) => {
             map.select_route(obj.route);
             poi.set_avaialble(obj.pois);
             map.select_pois(obj.pois);
+            $('#len').val(obj.length);
+            $('#smallModalContent').html("<h1> Success </h1>");
+            setTimeout(() => {
+                $('#smallModal').modal('hide');
+            }, 1000);
         });
 }
 
 window.addPOI = (index) => { poi.add_poi(index); }
 window.removePOI = (index) => { poi.remove_poi(index); }
 window.modalChoosePoint = (index) => { chooser.select_point(index); }
+window.choosePOIFilter = (type) => {
+    POI_FILTER = type;
+    $('#dropdownMenuButton').html(`Wybierz z listy - ${type}`);
+}
