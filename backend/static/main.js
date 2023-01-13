@@ -94,8 +94,10 @@ class InteractiveMap {
         })
     }
 
-    select_point(lon, lat, type, text) {
-        this.clear_features(type);
+    select_point(lon, lat, type, text, noclear = false) {
+        if (!noclear) {
+            this.clear_features(type);
+        }
         let feature = new ol.Feature({
             geometry: new ol.geom.Point([ lon, lat ]),
             text: text !== undefined ? text : '',
@@ -121,7 +123,7 @@ class InteractiveMap {
     select_pois(pois) {
         this.clear_features(POI);
         pois.forEach((p) => {
-            this.select_point(p.lon, p.lat, POI, p.name);
+            this.select_point(p.lon, p.lat, POI, p.name, true);
         })
     }
 
@@ -163,6 +165,13 @@ class InteractiveMap {
             this.start_point = start;
             this.end_point = end;
         }
+    }
+
+    center_map(lon, lat) {
+        this.map.setView(new ol.View({
+            center: [lon, lat],
+            zoom: 10
+        }))
     }
 
     reset() {
@@ -258,6 +267,7 @@ class PointChooser {
         $('#modal').modal('hide');
         let point = this.points.at(index);
         map.select_point(point.lon, point.lat, SELECTION, point.name);
+        map.center_map(point.lon, point.lat);
     }
 
     reset() {
