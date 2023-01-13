@@ -38,8 +38,6 @@ class GeoRoad:
                 false
             ) as pt
             JOIN roads rd ON pt.edge = rd.id 
-                JOIN roads rd ON pt.edge = rd.id 
-            JOIN roads rd ON pt.edge = rd.id 
             ORDER BY seq;
             SELECT * FROM {table_name};"""
         result = self.session.bind.execute(QUERY_SHORTEST_PATH).all()
