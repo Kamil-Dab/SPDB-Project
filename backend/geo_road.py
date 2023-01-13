@@ -43,13 +43,13 @@ class GeoRoad:
                     st_x(st_startpoint(geom)) as x1,
                     st_y(st_startpoint(geom)) as y1,
                     st_x(st_endpoint(geom)) as x2,
-                    st_y(st_endpoint(geom)) as y2   
+                    st_y(st_endpoint(geom)) as y2
                 FROM roads',
                     {self.get_nearest_start_point().source},
                     {self.get_nearest_end_point().source},
                     false
                 ) as pt
-            JOIN roads rd ON pt.edge = rd.id 
+            JOIN roads rd ON pt.edge = rd.id
             ORDER BY seq;
             SELECT * FROM {self.table_name};"""
         result = self.session.bind.execute(QUERY_SHORTEST_PATH).all()
@@ -65,7 +65,7 @@ class GeoRoad:
                 ST_Y(ST_LineInterpolatePoint(geom, ({distance} - agg_cost)/cost)) as y
             FROM
                 {self.table_name}
-            WHERE agg_cost <= {distance} 
+            WHERE agg_cost <= {distance}
                 ORDER BY agg_cost DESC LIMIT 1;
         """
         point = self.session.bind.execute(QUERY_POINT_IN_PATH).all()
