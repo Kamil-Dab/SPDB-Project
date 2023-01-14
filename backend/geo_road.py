@@ -54,21 +54,14 @@ class GeoRoad:
             SELECT * FROM {self.table_name};"""
         result = self.session.bind.execute(QUERY_SHORTEST_PATH).all()
         all_points = []
+        self.path = []
         for row in result:
+            self.path.append(row)
             all_points.extend(list(loads(row[-1]).coords))
         return all_points, result[-1][0]
 
     def point_in_path(self, distance):
-        QUERY_POINT_IN_PATH = f"""
-            SELECT
-                ST_X(ST_LineInterpolatePoint(geom, ({distance} - agg_cost)/cost)) as x,
-                ST_Y(ST_LineInterpolatePoint(geom, ({distance} - agg_cost)/cost)) as y
-            FROM
-                {self.table_name}
-            WHERE agg_cost <= {distance} 
-                ORDER BY agg_cost DESC LIMIT 1;
-        """
-        point = self.session.bind.execute(QUERY_POINT_IN_PATH).all()
-        if not point:
-            return []
-        return point[0][:]
+        for iter in self.path:
+            if iter[0] >= distance:
+                return loads(iter[1]).coords[0]
+        return []
