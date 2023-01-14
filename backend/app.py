@@ -91,7 +91,7 @@ class Route:
 
     def _find_route_and_poi_points(self, start, stop, enlen, searchst):
         for a, b in self.cache2:
-            if a == (start, stop, enlen, searchst):
+            if a == (start, stop, enlen, searchst, self.poi_filter):
                 self.availabla_vias = b[2]
                 return b
 
@@ -104,7 +104,7 @@ class Route:
         # TODO: if not found:
 
         self.availabla_vias = self._filter_poi_points(start, stop, points, enlen, length, self.n)
-        self.cache2.append([(start, stop, enlen, searchst), (path, length, self.availabla_vias)])
+        self.cache2.append([(start, stop, enlen, searchst, self.poi_filter), (path, length, self.availabla_vias)])
 
         return path, length, self.availabla_vias
 
