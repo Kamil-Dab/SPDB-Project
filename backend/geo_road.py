@@ -4,8 +4,6 @@ from shapely.geometry import Point
 from shapely.wkt import loads
 from geoalchemy2.shape import from_shape
 from sqlalchemy import func
-import random
-import string
 
 
 class GeoRoad:
@@ -13,11 +11,6 @@ class GeoRoad:
         self.start_coord = Point(start_longitude, start_latitude)
         self.end_coord = Point(end_longitude, end_latitude)
         self.session = get_session()
-        self.table_name = self.get_random_table_name()
-
-    def get_random_table_name(self, lenght=12):
-        letters = string.ascii_letters
-        return ''.join(random.choice(letters) for i in range(lenght))
 
     def get_nearest_start_point(self):
         return self.session.query(Road).order_by(func.ST_Distance(func.ST_StartPoint(Road.geom), from_shape(self.start_coord, srid=4326), True)).limit(1).one()
